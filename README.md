@@ -1,4 +1,4 @@
-# 🎬 StatFilmKafka — Real-Time Movie Streaming Statistics
+# StatFilmKafka — Real-Time Movie Streaming Statistics
 
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://openjdk.org/)
 [![Kafka Streams](https://img.shields.io/badge/Kafka%20Streams-4.0-black)](https://kafka.apache.org/documentation/streams/)
@@ -11,7 +11,7 @@ This project was developed as part of the *Mastère Big Data & Intelligence Arti
 
 ---
 
-## 📑 Table of contents
+## Table of contents
 
 - [Architecture](#-architecture)
 - [Tech stack](#-tech-stack)
@@ -27,7 +27,7 @@ This project was developed as part of the *Mastère Big Data & Intelligence Arti
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
             ┌───────────────────────┐
@@ -73,7 +73,7 @@ The application maintains **three state stores** populated by the streaming topo
 
 ---
 
-## 🧰 Tech stack
+## Tech stack
 
 - **Java 17** (records, switch expressions)
 - **Apache Kafka Streams 4.0** — stream processing engine
@@ -85,7 +85,7 @@ The application maintains **three state stores** populated by the streaming topo
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```
 StatFilmKafka/
@@ -126,7 +126,7 @@ StatFilmKafka/
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 You only need three things on your machine:
 
@@ -140,7 +140,7 @@ You only need three things on your machine:
 
 ---
 
-## 🚀 Quick start
+## Quick start
 
 ### 1. Clone the repository
 
@@ -214,7 +214,7 @@ docker compose down
 
 ---
 
-## 🌐 REST API
+## REST API
 
 All responses are JSON. The base URL during local development is `http://localhost:8080`.
 
@@ -280,7 +280,7 @@ Top 10 most-watched movies, sorted **descending**.
 
 ---
 
-## 🖥 Web dashboard
+## Web dashboard
 
 A lightweight single-page dashboard ships with the application and is served at `/`. It consumes the REST API directly:
 
@@ -292,7 +292,7 @@ No build step is required — it's plain HTML/CSS/JS bundled in the JAR's resour
 
 ---
 
-## 🌊 Streaming topology in detail
+## Streaming topology in detail
 
 ### Input events
 
@@ -337,7 +337,7 @@ Each aggregation materializes a state store. The HTTP layer reads them through K
 
 ---
 
-## 🧪 Tests
+## Tests
 
 The test suite covers the streaming topology and the service layer:
 
@@ -356,7 +356,7 @@ Both classes use `TopologyTestDriver` from `kafka-streams-test-utils`, which let
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 The application reads three optional environment variables; sensible defaults apply when they are not set:
 
@@ -376,7 +376,7 @@ Other Kafka Streams settings (auto offset reset, replication factor, application
 
 ---
 
-## 🩹 Troubleshooting
+## Troubleshooting
 
 **The API returns `500` immediately after startup.**
 Kafka Streams takes a few seconds to transition to `RUNNING` and warm up its state stores. Wait for the log line `API listening on http://0.0.0.0:8080/` and then a few more seconds before querying.
@@ -402,7 +402,3 @@ HTTP_PORT=9090 java -jar target/movie-stream-stats.jar
 The Kafka Streams app keeps its local state in `/tmp/kafka-streams/movie-stats-processor/`. Delete that directory (and run `docker compose down -v` to wipe the broker) to fully reset.
 
 ---
-
-## 📜 License
-
-Educational project — ESGI Mastère Big Data & IA.
