@@ -13,17 +13,17 @@ Ce projet a été développé dans le cadre du *Mastère Big Data & Intelligence
 
 ## Table des matières
 
-- [Architecture](#-architecture)
-- [Stack technique](#-stack-technique)
-- [Structure du projet](#-structure-du-projet)
-- [Prérequis](#-prérequis)
-- [Démarrage rapide](#-démarrage-rapide)
-- [API REST](#-api-rest)
-- [Tableau de bord web](#-tableau-de-bord-web)
-- [Topologie de streaming en détail](#-topologie-de-streaming-en-détail)
-- [Tests](#-tests)
-- [Configuration](#-configuration)
-- [Dépannage](#-dépannage)
+- [Architecture](#architecture)
+- [Stack technique](#stack-technique)
+- [Structure du projet](#structure-du-projet)
+- [Prérequis](#prérequis)
+- [Démarrage rapide](#démarrage-rapide)
+- [API REST](#api-rest)
+- [Tableau de bord web](#tableau-de-bord-web)
+- [Topologie de streaming en détail](#topologie-de-streaming-en-détail)
+- [Tests](#tests)
+- [Configuration](#configuration)
+- [Dépannage](#dépannage)
 
 ---
 
