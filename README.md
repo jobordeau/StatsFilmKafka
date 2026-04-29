@@ -1,29 +1,29 @@
-# StatFilmKafka — Real-Time Movie Streaming Statistics
+# StatFilmKafka — Statistiques de streaming de films en temps réel
 
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://openjdk.org/)
 [![Kafka Streams](https://img.shields.io/badge/Kafka%20Streams-4.0-black)](https://kafka.apache.org/documentation/streams/)
 [![Akka HTTP](https://img.shields.io/badge/Akka%20HTTP-10.7-blue)](https://doc.akka.io/docs/akka-http/current/)
 [![Maven](https://img.shields.io/badge/Maven-3.9%2B-red)](https://maven.apache.org/)
 
-A real-time analytics service built on **Apache Kafka Streams** that processes a live feed of movie viewing events and ratings, then exposes the aggregated statistics through a **REST API** and a small web dashboard.
+Un service d'analyse en temps réel construit sur **Apache Kafka Streams** qui traite un flux en direct d'événements de visionnage de films et de notes, puis expose les statistiques agrégées via une **API REST** et un petit tableau de bord web.
 
-This project was developed as part of the *Mastère Big Data & Intelligence Artificielle* at **ESGI**, around the **KazaaMovies** scenario: a streaming platform whose backend pushes raw viewing and rating events into Kafka topics. The job of this service is to turn those raw events into useful statistics — total views per movie, breakdowns by completion category, real-time activity over the last 5 minutes, and top/flop rankings.
+Ce projet a été développé dans le cadre du *Mastère Big Data & Intelligence Artificielle* à **ESGI**, autour du scénario **KazaaMovies** : une plateforme de streaming dont le backend envoie des événements bruts de visionnage et de notation dans des topics Kafka. Le rôle de ce service est de transformer ces événements bruts en statistiques utiles — nombre total de vues par film, répartitions par catégorie de complétion, activité en temps réel sur les 5 dernières minutes, et classements des meilleurs/pires films.
 
 ---
 
-## Table of contents
+## Table des matières
 
 - [Architecture](#-architecture)
-- [Tech stack](#-tech-stack)
-- [Project structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Quick start](#-quick-start)
-- [REST API](#-rest-api)
-- [Web dashboard](#-web-dashboard)
-- [Streaming topology in detail](#-streaming-topology-in-detail)
+- [Stack technique](#-stack-technique)
+- [Structure du projet](#-structure-du-projet)
+- [Prérequis](#-prérequis)
+- [Démarrage rapide](#-démarrage-rapide)
+- [API REST](#-api-rest)
+- [Tableau de bord web](#-tableau-de-bord-web)
+- [Topologie de streaming en détail](#-topologie-de-streaming-en-détail)
 - [Tests](#-tests)
 - [Configuration](#-configuration)
-- [Troubleshooting](#-troubleshooting)
+- [Dépannage](#-dépannage)
 
 ---
 
@@ -31,94 +31,96 @@ This project was developed as part of the *Mastère Big Data & Intelligence Arti
 
 ```
             ┌───────────────────────┐
-            │  movies-view-injector │  (Docker container, simulator)
-            │   produces events     │
+            │  movies-view-injector │  (Conteneur Docker, simulateur)
+            │   produit des événements
             └───────────┬───────────┘
                         │
             ┌───────────┴───────────┐
             │                       │
         ┌───▼────┐              ┌───▼────┐
-        │ views  │              │ likes  │   Kafka topics (KRaft broker)
+        │ views  │              │ likes  │   Topics Kafka (broker KRaft)
         └───┬────┘              └───┬────┘
             │                       │
             └───────────┬───────────┘
                         │
               ┌─────────▼──────────┐
-              │  Kafka Streams app │
+              │  Application       │
+              │  Kafka Streams     │
               │ (StatFilmKafka)    │
               │                    │
-              │ - Aggregations     │
-              │ - Tumbling windows │
-              │ - State stores     │
+              │ - Agrégations      │
+              │ - Fenêtres         │
+              │ - Stockages d'état │
               └─────────┬──────────┘
                         │
               ┌─────────▼──────────┐
-              │  Akka HTTP server  │
-              │  REST API + UI     │
+              │  Serveur Akka HTTP │
+              │  API REST + UI     │
               └─────────┬──────────┘
                         │
                 ┌───────▼────────┐
-                │  HTTP clients  │
-                │ (browser, curl)│
+                │  Clients HTTP  │
+                │ (navigateur,   │
+                │  curl)         │
                 └────────────────┘
 ```
 
-The application maintains **three state stores** populated by the streaming topology, then serves them through queryable stores via the REST API:
+L'application maintient **trois stockages d'état** alimentés par la topologie de streaming, puis les sert via des stores interrogeables via l'API REST :
 
-| Store                              | Type            | Purpose                                              |
-| ---------------------------------- | --------------- | ---------------------------------------------------- |
-| `view-stats-all-time-store`        | `KeyValueStore` | Cumulative per-movie view counts since launch        |
-| `view-stats-per-minute-store`      | `WindowStore`   | View counts per 1-minute tumbling window (5-min view) |
-| `score-stats-store`                | `KeyValueStore` | Sum + count of ratings per movie (for averaging)     |
-
----
-
-## Tech stack
-
-- **Java 17** (records, switch expressions)
-- **Apache Kafka Streams 4.0** — stream processing engine
-- **Akka HTTP 10.7** (Java DSL) — REST API server
-- **Jackson 2.17** — JSON (de)serialization
-- **JUnit 5** + **kafka-streams-test-utils** — unit testing
-- **Maven Shade Plugin** — fat JAR packaging
-- **Docker Compose** — local Kafka cluster + event injector
+| Store                              | Type            | Objectif                                                     |
+| ---------------------------------- | --------------- | ------------------------------------------------------------ |
+| `view-stats-all-time-store`        | `KeyValueStore` | Comptes cumulés de vues par film depuis le lancement         |
+| `view-stats-per-minute-store`      | `WindowStore`   | Comptes de vues par fenêtre glissante d'1 minute (vue sur 5 min) |
+| `score-stats-store`                | `KeyValueStore` | Somme + nombre de notes par film (pour calculer la moyenne)  |
 
 ---
 
-## Project structure
+## Stack technique
+
+- **Java 17** (records, expressions switch)
+- **Apache Kafka Streams 4.0** — moteur de traitement de flux
+- **Akka HTTP 10.7** (Java DSL) — serveur d'API REST
+- **Jackson 2.17** — (dé)sérialisation JSON
+- **JUnit 5** + **kafka-streams-test-utils** — tests unitaires
+- **Maven Shade Plugin** — packaging en fat JAR
+- **Docker Compose** — cluster Kafka local + injecteur d'événements
+
+---
+
+## Structure du projet
 
 ```
 StatFilmKafka/
-├── docker-compose.yml             # Kafka (KRaft) + event injector
-├── pom.xml                        # Maven build, Java 17
+├── docker-compose.yml             # Kafka (KRaft) + injecteur d'événements
+├── pom.xml                        # Build Maven, Java 17
 ├── README.md
 ├── .gitignore
 └── src/
     ├── main/
     │   ├── java/org/esgi/project/
-    │   │   ├── Main.java                              # entrypoint
+    │   │   ├── Main.java                              # point d'entrée
     │   │   ├── streaming/
-    │   │   │   ├── StreamProcessing.java              # topology builder
+    │   │   │   ├── StreamProcessing.java              # constructeur de topologie
     │   │   │   ├── models/
-    │   │   │   │   ├── View.java                      # input event
-    │   │   │   │   ├── Like.java                      # input event
+    │   │   │   │   ├── View.java                      # événement d'entrée
+    │   │   │   │   ├── Like.java                      # événement d'entrée
     │   │   │   │   ├── ViewCategory.java              # enum: START_ONLY/HALF/FULL
-    │   │   │   │   ├── ViewStats.java                 # aggregator for views
-    │   │   │   │   └── ScoreStats.java                # aggregator for scores
+    │   │   │   │   ├── ViewStats.java                 # agrégateur pour les vues
+    │   │   │   │   └── ScoreStats.java                # agrégateur pour les scores
     │   │   │   └── serdes/
     │   │   │       ├── JsonPojoSerde.java
     │   │   │       ├── JsonPojoSerializer.java
     │   │   │       └── JsonPojoDeserializer.java
     │   │   └── api/
-    │   │       ├── ApiServer.java                     # Akka HTTP bootstrap
-    │   │       ├── controllers/MovieController.java   # REST routes
-    │   │       ├── services/MovieStatsService.java    # store queries + sorting
+    │   │       ├── ApiServer.java                     # bootstrap Akka HTTP
+    │   │       ├── controllers/MovieController.java   # routes REST
+    │   │       ├── services/MovieStatsService.java    # requêtes sur les stores + tri
     │   │       └── dto/
     │   │           ├── MovieDetailsResponse.java
     │   │           ├── ScoreRankingItem.java
     │   │           └── ViewRankingItem.java
     │   └── resources/
-    │       └── public/index.html                      # web dashboard
+    │       └── public/index.html                      # tableau de bord web
     └── test/java/org/esgi/project/
         ├── streaming/StreamProcessingTopologyTest.java
         └── api/MovieStatsServiceTest.java
@@ -126,101 +128,101 @@ StatFilmKafka/
 
 ---
 
-## Prerequisites
+## Prérequis
 
-You only need three things on your machine:
+Vous n'avez besoin que de trois choses sur votre machine :
 
-| Tool             | Version    | Check with                |
+| Outil            | Version    | Vérifier avec             |
 | ---------------- | ---------- | ------------------------- |
-| **JDK**          | 17 or 21   | `java -version`           |
+| **JDK**          | 17 ou 21   | `java -version`           |
 | **Maven**        | 3.9+       | `mvn -version`            |
-| **Docker** + Compose | recent  | `docker compose version`  |
+| **Docker** + Compose | récent  | `docker compose version`  |
 
-> The Docker stack provides a single-node **Kafka 3.7 broker in KRaft mode** (no Zookeeper) plus the **`nekonyuu/movies-view-injector`** image that continuously publishes simulated events to the `views` and `likes` topics.
+> La pile Docker fournit un **broker Kafka 3.7 à nœud unique en mode KRaft** (pas de Zookeeper) ainsi que l'image **`nekonyuu/movies-view-injector`** qui publie en continu des événements simulés vers les topics `views` et `likes`.
 
 ---
 
-## Quick start
+## Démarrage rapide
 
-### 1. Clone the repository
+### 1. Cloner le dépôt
 
 ```bash
-git clone <your-repo-url> StatFilmKafka
+git clone <votre-url-de-dépôt> StatFilmKafka
 cd StatFilmKafka
 ```
 
-### 2. Start Kafka and the event injector
+### 2. Démarrer Kafka et l'injecteur d'événements
 
 ```bash
 docker compose up -d
 ```
 
-This launches:
-- `movie-stats-broker` — Kafka broker on `localhost:9092`
-- `movie-stats-injector` — pushes events to the `views` and `likes` topics
+Cela lance :
+- `movie-stats-broker` — broker Kafka sur `localhost:9092`
+- `movie-stats-injector` — envoie des événements vers les topics `views` et `likes`
 
-Verify the containers are running:
+Vérifiez que les conteneurs sont en cours d'exécution :
 
 ```bash
 docker compose ps
 ```
 
-You can also peek at the events being produced:
+Vous pouvez également jeter un œil aux événements produits :
 
 ```bash
 docker exec -it movie-stats-broker kafka-console-consumer \
   --bootstrap-server localhost:9092 --topic views --from-beginning --max-messages 5
 ```
 
-### 3. Build the project
+### 3. Construire le projet
 
 ```bash
 mvn clean package
 ```
 
-This compiles the code, runs all the unit tests, and produces a runnable fat JAR at `target/movie-stream-stats.jar`.
+Cela compile le code, exécute tous les tests unitaires et produit un fat JAR exécutable dans `target/movie-stream-stats.jar`.
 
-### 4. Run the application
+### 4. Lancer l'application
 
 ```bash
 java -jar target/movie-stream-stats.jar
 ```
 
-You should see the Kafka Streams app start, then the API log:
+Vous devriez voir l'application Kafka Streams démarrer, puis l'API afficher :
 
 ```
 API listening on http://0.0.0.0:8080/
 ```
 
-### 5. Use the API
+### 5. Utiliser l'API
 
-Open the dashboard in your browser:
+Ouvrez le tableau de bord dans votre navigateur :
 
 > **<http://localhost:8080>**
 
-Or query the API directly with `curl`:
+Ou interrogez l'API directement avec `curl` :
 
 ```bash
 curl http://localhost:8080/stats/ten/best/views | jq .
 curl http://localhost:8080/movies/1 | jq .
 ```
 
-### 6. Shutdown
+### 6. Arrêt
 
 ```bash
-# Stop the Java app with Ctrl+C, then:
+# Arrêtez l'application Java avec Ctrl+C, puis :
 docker compose down
 ```
 
 ---
 
-## REST API
+## API REST
 
-All responses are JSON. The base URL during local development is `http://localhost:8080`.
+Toutes les réponses sont en JSON. L'URL de base pendant le développement local est `http://localhost:8080`.
 
 ### `GET /movies/:id`
 
-Returns the cumulative + last-5-minutes view breakdown for a single movie.
+Retourne la répartition cumulative + des 5 dernières minutes pour un seul film.
 
 ```bash
 curl http://localhost:8080/movies/1
@@ -246,57 +248,57 @@ curl http://localhost:8080/movies/1
 }
 ```
 
-Returns **`404 Not Found`** if the movie has not received any view events yet.
+Retourne **`404 Not Found`** si le film n'a encore reçu aucun événement de visionnage.
 
 ### `GET /stats/ten/best/score`
 
-Top 10 movies by average rating, sorted **descending**.
+Top 10 des films par note moyenne, triés par ordre **décroissant**.
 
 ```json
 [
-  { "id": 99, "title": "movie title 1", "score": 9.98 },
-  { "id": 32, "title": "movie title 2", "score": 9.7 }
+  { "id": 99, "title": "titre du film 1", "score": 9.98 },
+  { "id": 32, "title": "titre du film 2", "score": 9.7 }
 ]
 ```
 
 ### `GET /stats/ten/best/views`
 
-Top 10 most-watched movies, sorted **descending**.
+Top 10 des films les plus regardés, triés par ordre **décroissant**.
 
 ```json
 [
-  { "id": 12, "title": "movie title 1", "views": 3500 },
-  { "id":  2, "title": "movie title 2", "views": 2800 }
+  { "id": 12, "title": "titre du film 1", "views": 3500 },
+  { "id":  2, "title": "titre du film 2", "views": 2800 }
 ]
 ```
 
 ### `GET /stats/ten/worst/score`
 
-10 worst-rated movies, sorted **ascending**.
+10 films les moins bien notés, triés par ordre **croissant**.
 
 ### `GET /stats/ten/worst/views`
 
-10 least-watched movies, sorted **ascending**.
+10 films les moins regardés, triés par ordre **croissant**.
 
 ---
 
-## Web dashboard
+## Tableau de bord web
 
-A lightweight single-page dashboard ships with the application and is served at `/`. It consumes the REST API directly:
+Un tableau de bord léger d'une seule page est fourni avec l'application et est servi à `/`. Il consomme l'API REST directement :
 
-- Browse the four ranking views from the navigation bar
-- Look up any movie by ID using the input field on the right
-- See the all-time vs. last-5-minutes breakdown side by side
+- Parcourez les quatre vues de classement depuis la barre de navigation
+- Recherchez n'importe quel film par ID en utilisant le champ de saisie à droite
+- Visualisez la répartition cumulative vs. 5 dernières minutes côte à côte
 
-No build step is required — it's plain HTML/CSS/JS bundled in the JAR's resources.
+Aucune étape de build n'est requise — c'est du HTML/CSS/JS pur intégré dans les ressources du JAR.
 
 ---
 
-## Streaming topology in detail
+## Topologie de streaming en détail
 
-### Input events
+### Événements d'entrée
 
-The injector publishes JSON to two Kafka topics with `null` keys:
+L'injecteur publie du JSON vers deux topics Kafka avec des clés `null` :
 
 ```json
 // topic: views
@@ -308,11 +310,11 @@ The injector publishes JSON to two Kafka topics with `null` keys:
 { "id": 1, "score": 4.8 }
 ```
 
-`view_category` is one of `start_only`, `half`, `full` — corresponding to the user stopping at the very beginning, in the middle, or watching to the end.
+`view_category` peut être `start_only`, `half` ou `full` — correspondant à l'utilisateur arrêtant au tout début, au milieu, ou regardant jusqu'à la fin.
 
-### Topology stages
+### Étapes de la topologie
 
-Both topics are first **re-keyed** by `movie_id`, since events arrive with no key.
+Les deux topics sont d'abord **re-clés** par `movie_id`, puisque les événements arrivent sans clé.
 
 ```
 views ──► selectKey(movie_id) ──┬──► groupByKey ──► aggregate ──► view-stats-all-time-store
@@ -323,82 +325,82 @@ views ──► selectKey(movie_id) ──┬──► groupByKey ──► aggr
 likes ──► selectKey(movie_id) ──► groupByKey ──► aggregate ──► score-stats-store
 ```
 
-### Why 1-minute tumbling windows for the "last 5 minutes" stat?
+### Pourquoi des fenêtres glissantes d'1 minute pour la statistique "5 dernières minutes" ?
 
-The naïve approach would be a single 5-minute tumbling window. The problem: when the API is queried at, say, `12:07`, the range `[12:02, 12:07]` overlaps **two** 5-minute windows (`[12:00, 12:05]` and `[12:05, 12:10]`). Summing them would inflate the counts to up to 10 minutes of data.
+L'approche naïve serait une seule fenêtre glissante de 5 minutes. Le problème : quand l'API est interrogée à, disons, `12:07`, la plage `[12:02, 12:07]` chevauche **deux** fenêtres de 5 minutes (`[12:00, 12:05]` et `[12:05, 12:10]`). Les additionner gonflerait les comptes jusqu'à 10 minutes de données.
 
-Using **1-minute tumbling windows** and summing the most recent 5 keeps the answer bounded to a fresh, correctly-sized slice. The tradeoff is finer-grained state, which is fine for the data volumes involved here. Window retention is set to **30 minutes** to cap state-store size.
+L'utilisation de **fenêtres glissantes d'1 minute** et la sommation des 5 plus récentes maintient la réponse limitée à une tranche fraîche de taille correcte. Le compromis est un état à grain plus fin, ce qui convient aux volumes de données impliqués ici. La rétention des fenêtres est fixée à **30 minutes** pour limiter la taille du store d'état.
 
-### State stores and queryable services
+### Stockages d'état et services interrogeables
 
-Each aggregation materializes a state store. The HTTP layer reads them through Kafka Streams' **interactive queries** API, which is exactly what makes the REST endpoints possible without an external database.
+Chaque agrégation matérialise un stockage d'état. La couche HTTP les lit via l'API des **requêtes interactives** de Kafka Streams, ce qui rend possible les endpoints REST sans base de données externe.
 
-`MovieStatsService` is wired with `Supplier<...Store>` rather than receiving a `KafkaStreams` instance directly. This inversion lets unit tests pass in stores from a `TopologyTestDriver` instead of a live cluster.
+`MovieStatsService` est câblé avec `Supplier<...Store>` plutôt que de recevoir une instance `KafkaStreams` directement. Cette inversion permet aux tests unitaires de passer des stores depuis un `TopologyTestDriver` au lieu d'un cluster en direct.
 
 ---
 
 ## Tests
 
-The test suite covers the streaming topology and the service layer:
+La suite de tests couvre la topologie de streaming et la couche de service :
 
 ```bash
 mvn test
 ```
 
-What's covered:
+Ce qui est couvert :
 
-| Test class                          | Focus                                                            |
+| Classe de test                      | Focus                                                            |
 | ----------------------------------- | ---------------------------------------------------------------- |
-| `StreamProcessingTopologyTest`      | View aggregation per category, multi-movie isolation, windowing, score averaging, missing-key behavior, title capture |
-| `MovieStatsServiceTest`             | Movie details (404 + happy path), top-N ascending/descending for both views and scores, limit enforcement, score rounding |
+| `StreamProcessingTopologyTest`      | Agrégation des vues par catégorie, isolation multi-films, fenêtrage, moyenne des scores, comportement sur clés manquantes, capture de titre |
+| `MovieStatsServiceTest`             | Détails du film (404 + chemin heureux), top-N croissant/décroissant pour vues et scores, application de limite, arrondi des scores |
 
-Both classes use `TopologyTestDriver` from `kafka-streams-test-utils`, which lets the topology run synchronously in-process — no Docker, no broker, fast.
+Les deux classes utilisent `TopologyTestDriver` de `kafka-streams-test-utils`, qui permet à la topologie de s'exécuter de manière synchrone en processus — pas de Docker, pas de broker, rapide.
 
 ---
 
 ## Configuration
 
-The application reads three optional environment variables; sensible defaults apply when they are not set:
+L'application lit trois variables d'environnement optionnelles ; des valeurs par défaut sensées s'appliquent lorsqu'elles ne sont pas définies :
 
-| Variable                   | Default            | Description                          |
+| Variable                   | Défaut             | Description                          |
 | -------------------------- | ------------------ | ------------------------------------ |
-| `KAFKA_BOOTSTRAP_SERVERS`  | `localhost:9092`   | Kafka broker(s) to connect to        |
-| `HTTP_HOST`                | `0.0.0.0`          | Bind address for the API server      |
-| `HTTP_PORT`                | `8080`             | Port for the API server              |
+| `KAFKA_BOOTSTRAP_SERVERS`  | `localhost:9092`   | Broker(s) Kafka auxquels se connecter |
+| `HTTP_HOST`                | `0.0.0.0`          | Adresse de liaison pour le serveur API |
+| `HTTP_PORT`                | `8080`             | Port pour le serveur API              |
 
-Example for a non-default broker:
+Exemple pour un broker non-défaut :
 
 ```bash
 KAFKA_BOOTSTRAP_SERVERS=kafka.example.com:9092 java -jar target/movie-stream-stats.jar
 ```
 
-Other Kafka Streams settings (auto offset reset, replication factor, application id) are defined in `Main.java`. The application uses **`auto.offset.reset=earliest`** so that restarting the app picks up events that were produced while it was down.
+Les autres paramètres de Kafka Streams (réinitialisation automatique d'offset, facteur de réplication, ID d'application) sont définis dans `Main.java`. L'application utilise **`auto.offset.reset=earliest`** afin que le redémarrage de l'application récupère les événements qui ont été produits pendant qu'elle était arrêtée.
 
 ---
 
-## Troubleshooting
+## Dépannage
 
-**The API returns `500` immediately after startup.**
-Kafka Streams takes a few seconds to transition to `RUNNING` and warm up its state stores. Wait for the log line `API listening on http://0.0.0.0:8080/` and then a few more seconds before querying.
+**L'API retourne `500` immédiatement après le démarrage.**
+Kafka Streams prend quelques secondes pour passer à l'état `RUNNING` et préchauffer ses stockages d'état. Attendez la ligne de log `API listening on http://0.0.0.0:8080/` puis quelques secondes de plus avant d'interroger.
 
-**`Connection refused` when starting the JAR.**
-Make sure the broker is up: `docker compose ps`. If it's healthy but you still can't connect, check that nothing else is bound to `localhost:9092`.
+**`Connection refused` lors du démarrage du JAR.**
+Assurez-vous que le broker est démarré : `docker compose ps`. S'il est sain mais que vous ne pouvez toujours pas vous connecter, vérifiez que rien d'autre n'est lié à `localhost:9092`.
 
-**Empty rankings even though events are flowing.**
-Inspect the topics directly:
+**Classements vides même si les événements circulent.**
+Inspectez les topics directement :
 ```bash
 docker exec -it movie-stats-broker kafka-console-consumer \
   --bootstrap-server localhost:9092 --topic views --from-beginning --max-messages 5
 ```
-If you see events here but not in the API, double-check that the JAR is connected to the right broker (`KAFKA_BOOTSTRAP_SERVERS`).
+Si vous voyez des événements ici mais pas dans l'API, vérifiez que le JAR est connecté au bon broker (`KAFKA_BOOTSTRAP_SERVERS`).
 
-**Port `8080` is already in use.**
-Run with a different port:
+**Le port `8080` est déjà utilisé.**
+Lancez avec un port différent :
 ```bash
 HTTP_PORT=9090 java -jar target/movie-stream-stats.jar
 ```
 
-**Want a clean slate.**
-The Kafka Streams app keeps its local state in `/tmp/kafka-streams/movie-stats-processor/`. Delete that directory (and run `docker compose down -v` to wipe the broker) to fully reset.
+**Besoin d'une remise à zéro complète.**
+L'application Kafka Streams conserve son état local dans `/tmp/kafka-streams/movie-stats-processor/`. Supprimez ce répertoire (et exécutez `docker compose down -v` pour effacer le broker) pour une réinitialisation complète.
 
 ---
