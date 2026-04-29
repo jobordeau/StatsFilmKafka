@@ -1,0 +1,41 @@
+# Compiled output
+target/
+out/
+*.class
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Kafka Streams local state
+/tmp/kafka-streams/
+state/
+
+# Environment files
+.env
+.env.local
