@@ -147,7 +147,7 @@ Vous n'avez besoin que de trois choses sur votre machine :
 ### 1. Cloner le dépôt
 
 ```bash
-git clone <votre-url-de-dépôt> StatFilmKafka
+git clone https://github.com/jobordeau/StatsFilmKafka.git
 cd StatFilmKafka
 ```
 
